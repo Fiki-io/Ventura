@@ -1,0 +1,6 @@
+{
+  "name": "Ventura",
+  "description": "Runtime ARM64 dengan kompilasi statis AOT dan jembatan DirectX 9 serta WinSock2 langsung untuk menjalankan biner PC GTA San Andreas (gta_sa.exe) dan SA-MP (samp.dll).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

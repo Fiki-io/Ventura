@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">Ventura</string>
+    <string name="app_subtitle">ARM64 Engine Runner — GTA San Andreas PC &amp; SA-MP</string>
+    <string name="arch_badge_arm64">ARM64-V8A</string>
+
+    <string name="section_game_folder">Folder Instalasi Game PC</string>
+    <string name="label_directory_path">Lokasi Folder (gta_sa.exe &amp; samp.dll)</string>
+    <string name="hint_directory_path">/storage/emulated/0/GTA San Andreas</string>
+    <string name="action_select_folder">Pilih Folder</string>
+    <string name="action_verify_folder">Periksa File</string>
+
+    <string name="status_ready">Siap Dijalankan</string>
+    <string name="status_incomplete">File Belum Lengkap</string>
+    <string name="file_found">Tersedia</string>
+    <string name="file_missing">Tidak Ditemukan</string>
+
+    <string name="section_samp_settings">Pengaturan SA-MP &amp; Koneksi Server</string>
+    <string name="label_player_nickname">Nickname Pemain</string>
+    <string name="hint_player_nickname">Masukkan Nickname (Contoh: Carl_Johnson)</string>
+    <string name="label_server_address">IP / Host Server</string>
+    <string name="hint_server_address">127.0.0.1</string>
+    <string name="label_server_port">Port</string>
+    <string name="hint_server_port">7777</string>
+    <string name="label_server_password">Password Server (Opsional)</string>
+
+    <string name="action_check_server">Cek Server</string>
+    <string name="action_save_server">Simpan Server</string>
+    <string name="action_remove_server">Hapus</string>
+    <string name="label_saved_servers">Daftar Server Tersimpan</string>
+
+    <string name="action_start_samp">Mulai SA-MP</string>
+    <string name="action_start_singleplayer">Mulai Singleplayer</string>
+
+    <string name="runner_key_esc">ESC</string>
+    <string name="runner_key_tab">TAB</string>
+    <string name="runner_key_f6">F6 (CHAT)</string>
+    <string name="runner_key_kb">KEYBOARD</string>
+    <string name="runner_action_exit">KELUAR</string>
+
+    <string name="ctrl_forward">W</string>
+    <string name="ctrl_left">A</string>
+    <string name="ctrl_back">S</string>
+    <string name="ctrl_right">D</string>
+    <string name="ctrl_sprint">SPACE</string>
+    <string name="ctrl_jump">SHIFT</string>
+    <string name="ctrl_enter_veh">F</string>
+    <string name="ctrl_passenger">G</string>
+    <string name="ctrl_fire">ATK</string>
+    <string name="ctrl_aim">AIM</string>
+</resources>
