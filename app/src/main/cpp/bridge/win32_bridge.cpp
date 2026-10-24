@@ -40,63 +40,121 @@ uint32_t PopStackArg(MemoryArena& arena, CpuState32& cpu) {
 }
 
 uint32_t DefaultStdcallBytesFor(const std::string& fn) {
-    if (fn == "GetCommandLineA" || fn == "GetTickCount" || fn == "timeGetTime" ||
-        fn == "GetLastError" || fn == "WSAGetLastError" || fn == "WSACleanup" ||
-        fn == "GetACP" || fn == "GetOEMCP" || fn == "GetEnvironmentStrings" ||
-        fn == "GetEnvironmentStringsW" || fn == "GetActiveWindow" || fn == "GetForegroundWindow" ||
-        fn == "GetDesktopWindow" || fn == "TlsAlloc") {
+    if (fn == "GetCommandLineA" || fn == "GetCommandLineW" || fn == "GetTickCount" ||
+        fn == "timeGetTime" || fn == "GetLastError" || fn == "WSAGetLastError" ||
+        fn == "WSACleanup" || fn == "GetACP" || fn == "GetOEMCP" ||
+        fn == "GetEnvironmentStrings" || fn == "GetEnvironmentStringsA" ||
+        fn == "GetEnvironmentStringsW" || fn == "GetActiveWindow" ||
+        fn == "GetForegroundWindow" || fn == "GetDesktopWindow" || fn == "TlsAlloc" ||
+        fn == "GetVersion" || fn == "GetCurrentThreadId" || fn == "GetCurrentProcessId" ||
+        fn == "GetCurrentProcess" || fn == "GetCurrentThread" || fn == "IsDebuggerPresent" ||
+        fn == "CoUninitialize" || fn == "ReleaseCapture" || fn == "GetCapture" ||
+        fn == "GetDoubleClickTime") {
         return 0;
     }
-    if (fn == "GetModuleHandleA" || fn == "LoadLibraryA" || fn == "FreeLibrary" ||
-        fn == "CloseHandle" || fn == "QueryPerformanceCounter" || fn == "QueryPerformanceFrequency" ||
+    if (fn == "GetModuleHandleA" || fn == "GetModuleHandleW" || fn == "LoadLibraryA" ||
+        fn == "LoadLibraryW" || fn == "FreeLibrary" || fn == "CloseHandle" ||
+        fn == "QueryPerformanceCounter" || fn == "QueryPerformanceFrequency" ||
         fn == "Sleep" || fn == "ExitProcess" || fn == "RegisterClassA" || fn == "UpdateWindow" ||
         fn == "TranslateMessage" || fn == "DispatchMessageA" || fn == "GetAsyncKeyState" ||
         fn == "GetKeyState" || fn == "ShowCursor" || fn == "SetFocus" || fn == "GetDC" ||
         fn == "RegCloseKey" || fn == "timeBeginPeriod" || fn == "timeEndPeriod" ||
         fn == "closesocket" || fn == "inet_addr" || fn == "htons" || fn == "htonl" ||
         fn == "ntohs" || fn == "ntohl" || fn == "gethostbyname" || fn == "Direct3DCreate9" ||
-        fn == "GetStartupInfoA" || fn == "GetStdHandle" || fn == "GetFileType" ||
-        fn == "FreeEnvironmentStringsA" || fn == "FreeEnvironmentStringsW" ||
+        fn == "GetStartupInfoA" || fn == "GetStartupInfoW" || fn == "GetStdHandle" ||
+        fn == "GetFileType" || fn == "FreeEnvironmentStringsA" || fn == "FreeEnvironmentStringsW" ||
         fn == "InitializeCriticalSection" || fn == "EnterCriticalSection" ||
         fn == "LeaveCriticalSection" || fn == "DeleteCriticalSection" ||
-        fn == "InterlockedIncrement" || fn == "InterlockedDecrement" ||
-        fn == "TlsGetValue" || fn == "TlsFree" || fn == "SetCurrentDirectoryA" ||
-        fn == "FindClose" || fn == "PostQuitMessage") {
+        fn == "TryEnterCriticalSection" || fn == "InterlockedIncrement" ||
+        fn == "InterlockedDecrement" || fn == "TlsGetValue" || fn == "TlsFree" ||
+        fn == "FlsAlloc" || fn == "FlsGetValue" || fn == "FlsFree" ||
+        fn == "SetCurrentDirectoryA" || fn == "FindClose" || fn == "PostQuitMessage" ||
+        fn == "GetVersionExA" || fn == "GetVersionExW" || fn == "SetHandleCount" ||
+        fn == "SetLastError" || fn == "GlobalMemoryStatus" || fn == "GetSystemInfo" ||
+        fn == "GetSystemTimeAsFileTime" || fn == "GetLocalTime" || fn == "GetSystemTime" ||
+        fn == "GetTimeZoneInformation" || fn == "SetUnhandledExceptionFilter" ||
+        fn == "UnhandledExceptionFilter" || fn == "SetErrorMode" || fn == "GetSystemMetrics" ||
+        fn == "CoInitialize" || fn == "DestroyWindow" || fn == "SetForegroundWindow" ||
+        fn == "BringWindowToTop" || fn == "SetActiveWindow" || fn == "SetCapture" ||
+        fn == "ClipCursor" || fn == "SetCursor" || fn == "GetKeyboardState" ||
+        fn == "GetKeyboardLayout" || fn == "CharUpperA" || fn == "CharLowerA" ||
+        fn == "HeapDestroy" || fn == "FlushFileBuffers" || fn == "SetEndOfFile" ||
+        fn == "DeleteFileA" || fn == "RemoveDirectoryA" || fn == "GetFileAttributesA" ||
+        fn == "GetDriveTypeA" || fn == "SetEvent" || fn == "ResetEvent" ||
+        fn == "ReleaseMutex" || fn == "ResumeThread" || fn == "SuspendThread" ||
+        fn == "GetThreadPriority" || fn == "EncodePointer" || fn == "DecodePointer" ||
+        fn == "IsValidCodePage" || fn == "lstrlenA" || fn == "OutputDebugStringA" ||
+        fn == "GlobalFree" || fn == "GlobalLock" || fn == "GlobalUnlock" || fn == "LocalFree" ||
+        fn == "GetStockObject" || fn == "CreateCompatibleDC" || fn == "DeleteDC" ||
+        fn == "DeleteObject" || fn == "CreateSolidBrush" || fn == "SwapBuffers") {
         return 4;
     }
     if (fn == "GetProcAddress" || fn == "ShowWindow" || fn == "GetClientRect" ||
         fn == "GetWindowRect" || fn == "ReleaseDC" || fn == "GetDeviceCaps" ||
         fn == "ScreenToClient" || fn == "ClientToScreen" || fn == "SetCursorPos" ||
         fn == "GetCursorPos" || fn == "WSAStartup" || fn == "GetFileSize" ||
-        fn == "D3DXCreateSprite" || fn == "TlsSetValue" || fn == "InterlockedExchange" ||
-        fn == "GetCurrentDirectoryA" || fn == "FindFirstFileA" || fn == "FindNextFileA" ||
-        fn == "WaitForSingleObject" || fn == "GetCPInfo" || fn == "EnumDisplaySettingsA" ||
-        fn == "ChangeDisplaySettingsA") {
+        fn == "D3DXCreateSprite" || fn == "TlsSetValue" || fn == "FlsSetValue" ||
+        fn == "InterlockedExchange" || fn == "GetCurrentDirectoryA" ||
+        fn == "FindFirstFileA" || fn == "FindNextFileA" || fn == "WaitForSingleObject" ||
+        fn == "GetCPInfo" || fn == "EnumDisplaySettingsA" || fn == "ChangeDisplaySettingsA" ||
+        fn == "InitializeCriticalSectionAndSpinCount" || fn == "SetStdHandle" ||
+        fn == "MoveFileA" || fn == "CreateDirectoryA" || fn == "SetFileAttributesA" ||
+        fn == "GetTempPathA" || fn == "WinExec" || fn == "TerminateThread" ||
+        fn == "SetThreadPriority" || fn == "GetExitCodeThread" || fn == "IsValidLocale" ||
+        fn == "lstrcpyA" || fn == "lstrcatA" || fn == "lstrcmpA" || fn == "lstrcmpiA" ||
+        fn == "GlobalAlloc" || fn == "LocalAlloc" || fn == "CoInitializeEx" ||
+        fn == "SetWindowTextA" || fn == "LoadIconA" || fn == "LoadCursorA" ||
+        fn == "MapVirtualKeyA" || fn == "SelectObject" || fn == "SetBkMode" ||
+        fn == "SetBkColor" || fn == "SetTextColor" || fn == "ChoosePixelFormat" ||
+        fn == "SystemTimeToFileTime" || fn == "FileTimeToLocalFileTime" ||
+        fn == "FileTimeToSystemTime") {
         return 8;
     }
     if (fn == "HeapCreate" || fn == "HeapAlloc" || fn == "HeapFree" || fn == "HeapSize" ||
-        fn == "VirtualFree" || fn == "SetWindowLongA" || fn == "GetWindowLongA" ||
-        fn == "socket" || fn == "bind" || fn == "connect" || fn == "ioctlsocket" ||
-        fn == "DirectSoundCreate8" || fn == "EAXDirectSoundCreate" || fn == "GetModuleFileNameA" ||
-        fn == "AdjustWindowRect" || fn == "CreateMutexA") {
+        fn == "VirtualFree" || fn == "VirtualQuery" || fn == "SetWindowLongA" ||
+        fn == "GetWindowLongA" || fn == "socket" || fn == "bind" || fn == "connect" ||
+        fn == "ioctlsocket" || fn == "DirectSoundCreate8" || fn == "EAXDirectSoundCreate" ||
+        fn == "EAXDirectSoundCreate8" || fn == "GetModuleFileNameA" || fn == "GetModuleFileNameW" ||
+        fn == "AdjustWindowRect" || fn == "CreateMutexA" || fn == "OpenMutexA" ||
+        fn == "ReleaseSemaphore" || fn == "InterlockedCompareExchange" ||
+        fn == "GetShortPathNameA" || fn == "CopyFileA" || fn == "lstrcpynA" ||
+        fn == "MulDiv" || fn == "OffsetRect" || fn == "IntersectRect" || fn == "PtInRect" ||
+        fn == "GetWindowTextA" || fn == "GetKeyNameTextA" || fn == "GetObjectA" ||
+        fn == "CreatePen" || fn == "CreateCompatibleBitmap" || fn == "SetPixelFormat") {
         return 12;
     }
     if (fn == "VirtualAlloc" || fn == "VirtualProtect" || fn == "SetFilePointer" ||
         fn == "GetMessageA" || fn == "DefWindowProcA" || fn == "HeapReAlloc" ||
-        fn == "CreateEventA") {
+        fn == "CreateEventA" || fn == "GetStringTypeW" || fn == "GetLocaleInfoA" ||
+        fn == "GetLocaleInfoW" || fn == "RtlUnwind" || fn == "RaiseException" ||
+        fn == "GetFullPathNameA" || fn == "GetTempFileNameA" || fn == "WaitForMultipleObjects" ||
+        fn == "CreateSemaphoreA" || fn == "SystemParametersInfoA" || fn == "AdjustWindowRectEx" ||
+        fn == "MessageBoxA" || fn == "SendMessageA" || fn == "PostMessageA" ||
+        fn == "GetTextExtentPoint32A" || fn == "DirectDrawCreateEx") {
         return 16;
     }
     if (fn == "ReadFile" || fn == "WriteFile" || fn == "PeekMessageA" || fn == "CallWindowProcA" ||
-        fn == "RegOpenKeyExA" || fn == "select" || fn == "setsockopt" || fn == "DirectInput8Create") {
+        fn == "RegOpenKeyExA" || fn == "select" || fn == "setsockopt" || fn == "DirectInput8Create" ||
+        fn == "GetStringTypeA" || fn == "GetDiskFreeSpaceA" || fn == "CoCreateInstance" ||
+        fn == "SetRect" || fn == "ToAscii" || fn == "TextOutA") {
         return 20;
     }
     if (fn == "RegQueryValueExA" || fn == "sendto" || fn == "recvfrom" ||
-        fn == "MultiByteToWideChar" || fn == "CreateThread") {
+        fn == "MultiByteToWideChar" || fn == "CreateThread" || fn == "LCMapStringA" ||
+        fn == "LCMapStringW" || fn == "CompareStringA" || fn == "CompareStringW" ||
+        fn == "MoveWindow" || fn == "ToAsciiEx" || fn == "CreateDIBSection") {
         return 24;
     }
-    if (fn == "CreateFileA") return 28;
-    if (fn == "WideCharToMultiByte") return 32;
+    if (fn == "CreateFileA" || fn == "CreateFileW" || fn == "DuplicateHandle" ||
+        fn == "SetWindowPos") {
+        return 28;
+    }
+    if (fn == "WideCharToMultiByte" || fn == "GetVolumeInformationA") return 32;
+    if (fn == "BitBlt") return 36;
+    if (fn == "CreateProcessA") return 40;
+    if (fn == "StretchBlt") return 44;
     if (fn == "CreateWindowExA" || fn == "D3DXCreateFontA") return 48;
+    if (fn == "CreateFontA") return 56;
     return 0;
 }
 }  // namespace
@@ -510,6 +568,11 @@ void Win32Bridge::EnqueueMouseEvent(int32_t x, int32_t y, bool left_down) {
     message_queue_.push_back(msg);
 }
 
+std::string Win32Bridge::GetLastSyscallSummary() const {
+    std::lock_guard<std::mutex> lock(input_mutex_);
+    return last_syscall_summary_;
+}
+
 bool Win32Bridge::DispatchThunkCall(uint32_t thunk_va, MemoryArena& arena, CpuState32& cpu) {
     auto it = va_to_index_.find(thunk_va);
     if (it == va_to_index_.end()) {
@@ -524,6 +587,11 @@ bool Win32Bridge::DispatchThunkCall(uint32_t thunk_va, MemoryArena& arena, CpuSt
     uint32_t initial_esp = cpu.esp;
     const std::string& fn = entry.function_name;
 
+    {
+        std::lock_guard<std::mutex> lock(input_mutex_);
+        last_syscall_summary_ = entry.dll_name + "!" + fn;
+    }
+
     if (entry.dll_name == "COM_STUB") {
         cpu.esp = initial_esp + entry.stack_pop_bytes;
         cpu.eax = 0; // S_OK
@@ -533,6 +601,141 @@ bool Win32Bridge::DispatchThunkCall(uint32_t thunk_va, MemoryArena& arena, CpuSt
 
     if (fn == "GetCommandLineA") {
         cpu.eax = kCommandLineVa;
+    } else if (fn == "GetVersion") {
+        cpu.eax = 0x0A280105u; // Windows XP SP2 (5.1 build 2600)
+    } else if (fn == "GetVersionExA") {
+        uint32_t lp_ver = PopStackArg(arena, cpu);
+        if (lp_ver != 0 && arena.IsValidRange(lp_ver, 20)) {
+            arena.WriteU32(lp_ver + 4, 5);    // dwMajorVersion = 5
+            arena.WriteU32(lp_ver + 8, 1);    // dwMinorVersion = 1
+            arena.WriteU32(lp_ver + 12, 2600);// dwBuildNumber = 2600
+            arena.WriteU32(lp_ver + 16, 2);   // VER_PLATFORM_WIN32_NT
+        }
+        cpu.eax = 1;
+    } else if (fn == "SetHandleCount") {
+        cpu.eax = PopStackArg(arena, cpu);
+    } else if (fn == "GetCurrentThreadId") {
+        cpu.eax = 0x00001000u;
+    } else if (fn == "GetCurrentProcessId") {
+        cpu.eax = 0x00002000u;
+    } else if (fn == "GetCurrentProcess") {
+        cpu.eax = 0xFFFFFFFFu;
+    } else if (fn == "GetCurrentThread") {
+        cpu.eax = 0xFFFFFFFEu;
+    } else if (fn == "IsDebuggerPresent") {
+        cpu.eax = 0;
+    } else if (fn == "GlobalMemoryStatus") {
+        uint32_t lp_mem = PopStackArg(arena, cpu);
+        if (lp_mem != 0 && arena.IsValidRange(lp_mem, 32)) {
+            arena.WriteU32(lp_mem + 0, 32);
+            arena.WriteU32(lp_mem + 4, 20);
+            arena.WriteU32(lp_mem + 8, 536870912u);  // 512 MB TotalPhys
+            arena.WriteU32(lp_mem + 12, 402653184u); // 384 MB AvailPhys
+            arena.WriteU32(lp_mem + 16, 1073741824u);
+            arena.WriteU32(lp_mem + 20, 805306368u);
+            arena.WriteU32(lp_mem + 24, 2147352576u);
+            arena.WriteU32(lp_mem + 28, 1879048192u);
+        }
+        cpu.eax = 1;
+    } else if (fn == "GetSystemInfo") {
+        uint32_t lp_sys = PopStackArg(arena, cpu);
+        if (lp_sys != 0 && arena.IsValidRange(lp_sys, 36)) {
+            uint8_t zero[36] = {0};
+            arena.WriteBytes(lp_sys, zero, 36);
+            arena.WriteU32(lp_sys + 4, 4096);        // dwPageSize
+            arena.WriteU32(lp_sys + 8, 0x00010000u); // lpMinimumApplicationAddress
+            arena.WriteU32(lp_sys + 12, 0x7FFEFFFFu);// lpMaximumApplicationAddress
+            arena.WriteU32(lp_sys + 16, 0x0000000Fu);// dwActiveProcessorMask
+            arena.WriteU32(lp_sys + 20, 4);          // dwNumberOfProcessors
+            arena.WriteU32(lp_sys + 24, 586);        // dwProcessorType
+            arena.WriteU32(lp_sys + 28, 65536);      // dwAllocationGranularity
+        }
+        cpu.eax = 1;
+    } else if (fn == "GetSystemMetrics") {
+        uint32_t idx = PopStackArg(arena, cpu);
+        if (idx == 0) cpu.eax = 1280;      // SM_CXSCREEN
+        else if (idx == 1) cpu.eax = 720;  // SM_CYSCREEN
+        else cpu.eax = 0;
+    } else if (fn == "GetStringTypeA" || fn == "GetStringTypeW") {
+        uint32_t is_a = (fn == "GetStringTypeA") ? 1u : 0u;
+        if (is_a) PopStackArg(arena, cpu); // Locale
+        PopStackArg(arena, cpu);           // dwInfoType
+        PopStackArg(arena, cpu);           // lpSrcStr
+        int32_t cch = static_cast<int32_t>(PopStackArg(arena, cpu));
+        uint32_t lp_chartype = PopStackArg(arena, cpu);
+        int32_t count = (cch < 0) ? 16 : std::min<int32_t>(cch, 256);
+        if (lp_chartype != 0 && count > 0 && arena.IsValidRange(lp_chartype, static_cast<uint32_t>(count * 2))) {
+            for (int32_t i = 0; i < count; ++i) {
+                arena.WriteU16(lp_chartype + static_cast<uint32_t>(i * 2), 0x0001u);
+            }
+        }
+        cpu.eax = 1;
+    } else if (fn == "LCMapStringA" || fn == "LCMapStringW") {
+        PopStackArg(arena, cpu); // Locale
+        PopStackArg(arena, cpu); // dwMapFlags
+        uint32_t src_va = PopStackArg(arena, cpu);
+        int32_t cch_src = static_cast<int32_t>(PopStackArg(arena, cpu));
+        uint32_t dst_va = PopStackArg(arena, cpu);
+        int32_t cch_dst = static_cast<int32_t>(PopStackArg(arena, cpu));
+        int32_t len = (cch_src <= 0) ? 4 : cch_src;
+        if (cch_dst == 0) {
+            cpu.eax = static_cast<uint32_t>(len);
+        } else {
+            if (dst_va != 0 && src_va != 0 && arena.IsValidRange(dst_va, static_cast<uint32_t>(len * 2))) {
+                const uint8_t* s = arena.GetHostPointer(src_va);
+                if (s) arena.WriteBytes(dst_va, s, static_cast<uint32_t>(len));
+            }
+            cpu.eax = static_cast<uint32_t>(len);
+        }
+    } else if (fn == "MultiByteToWideChar") {
+        PopStackArg(arena, cpu); // CodePage
+        PopStackArg(arena, cpu); // dwFlags
+        uint32_t src_va = PopStackArg(arena, cpu);
+        int32_t cb_mb = static_cast<int32_t>(PopStackArg(arena, cpu));
+        uint32_t dst_va = PopStackArg(arena, cpu);
+        int32_t cch_wc = static_cast<int32_t>(PopStackArg(arena, cpu));
+        std::string s = (src_va != 0) ? arena.ReadCString(src_va, cb_mb > 0 ? static_cast<size_t>(cb_mb) : 256u) : "";
+        uint32_t needed = static_cast<uint32_t>(s.size() + 1);
+        if (cch_wc == 0 || dst_va == 0) {
+            cpu.eax = needed;
+        } else {
+            uint32_t write_n = std::min<uint32_t>(needed, static_cast<uint32_t>(cch_wc));
+            for (uint32_t i = 0; i < write_n; ++i) {
+                uint16_t ch = (i < s.size()) ? static_cast<uint8_t>(s[i]) : 0u;
+                arena.WriteU16(dst_va + i * 2, ch);
+            }
+            cpu.eax = write_n;
+        }
+    } else if (fn == "WideCharToMultiByte") {
+        PopStackArg(arena, cpu); // CodePage
+        PopStackArg(arena, cpu); // dwFlags
+        uint32_t src_va = PopStackArg(arena, cpu);
+        int32_t cch_wc = static_cast<int32_t>(PopStackArg(arena, cpu));
+        uint32_t dst_va = PopStackArg(arena, cpu);
+        int32_t cb_mb = static_cast<int32_t>(PopStackArg(arena, cpu));
+        PopStackArg(arena, cpu); // lpDefaultChar
+        uint32_t used_def_va = PopStackArg(arena, cpu);
+        if (used_def_va != 0) arena.WriteU32(used_def_va, 0);
+        uint32_t len = 0;
+        if (src_va != 0) {
+            uint32_t max_c = (cch_wc > 0) ? static_cast<uint32_t>(cch_wc) : 256u;
+            while (len < max_c) {
+                uint16_t w = arena.ReadU16(src_va + len * 2);
+                len++;
+                if (w == 0 && cch_wc < 0) break;
+            }
+        }
+        if (len == 0) len = 1;
+        if (cb_mb == 0 || dst_va == 0) {
+            cpu.eax = len;
+        } else {
+            uint32_t write_n = std::min<uint32_t>(len, static_cast<uint32_t>(cb_mb));
+            for (uint32_t i = 0; i < write_n; ++i) {
+                uint8_t c = (src_va != 0) ? static_cast<uint8_t>(arena.ReadU16(src_va + i * 2) & 0x7Fu) : 0u;
+                arena.WriteU8(dst_va + i, c);
+            }
+            cpu.eax = write_n;
+        }
     } else if (fn == "GetModuleHandleA") {
         uint32_t mod_name_va = PopStackArg(arena, cpu);
         if (mod_name_va == 0) {
@@ -557,7 +760,9 @@ bool Win32Bridge::DispatchThunkCall(uint32_t thunk_va, MemoryArena& arena, CpuSt
     } else if (fn == "GetProcAddress") {
         PopStackArg(arena, cpu); // hMod
         uint32_t proc_name_va = PopStackArg(arena, cpu);
-        std::string proc_name = arena.ReadCString(proc_name_va);
+        std::string proc_name = (proc_name_va > 0x00010000u)
+            ? arena.ReadCString(proc_name_va)
+            : ("Ordinal_" + std::to_string(proc_name_va));
         cpu.eax = ResolveProcAddress("DYNAMIC", proc_name);
     } else if (fn == "FreeLibrary") {
         PopStackArg(arena, cpu);
@@ -608,6 +813,11 @@ bool Win32Bridge::DispatchThunkCall(uint32_t thunk_va, MemoryArena& arena, CpuSt
         PopStackArg(arena, cpu);
         PopStackArg(arena, cpu);
         cpu.eax = 1;
+    } else if (fn == "HeapSize") {
+        PopStackArg(arena, cpu);
+        PopStackArg(arena, cpu);
+        PopStackArg(arena, cpu);
+        cpu.eax = 4096;
     } else if (fn == "GetStartupInfoA") {
         uint32_t info_va = PopStackArg(arena, cpu);
         if (info_va != 0 && arena.IsValidRange(info_va, 68)) {
@@ -639,24 +849,25 @@ bool Win32Bridge::DispatchThunkCall(uint32_t thunk_va, MemoryArena& arena, CpuSt
             arena.WriteU8(lp_cpinfo + 4, '?');
         }
         cpu.eax = 1;
-    } else if (fn == "GetEnvironmentStrings" || fn == "GetEnvironmentStringsW") {
+    } else if (fn == "GetEnvironmentStrings" || fn == "GetEnvironmentStringsA" || fn == "GetEnvironmentStringsW") {
         uint32_t env_va = arena.HeapAllocSim(64, true);
         cpu.eax = env_va;
     } else if (fn == "FreeEnvironmentStringsA" || fn == "FreeEnvironmentStringsW") {
         PopStackArg(arena, cpu);
         cpu.eax = 1;
-    } else if (fn == "TlsAlloc") {
+    } else if (fn == "TlsAlloc" || fn == "FlsAlloc") {
+        if (fn == "FlsAlloc") PopStackArg(arena, cpu);
         cpu.eax = next_tls_index_++;
-    } else if (fn == "TlsGetValue") {
+    } else if (fn == "TlsGetValue" || fn == "FlsGetValue") {
         uint32_t idx = PopStackArg(arena, cpu);
         auto tit = tls_slots_.find(idx);
         cpu.eax = (tit != tls_slots_.end()) ? tit->second : 0;
-    } else if (fn == "TlsSetValue") {
+    } else if (fn == "TlsSetValue" || fn == "FlsSetValue") {
         uint32_t idx = PopStackArg(arena, cpu);
         uint32_t val = PopStackArg(arena, cpu);
         tls_slots_[idx] = val;
         cpu.eax = 1;
-    } else if (fn == "TlsFree") {
+    } else if (fn == "TlsFree" || fn == "FlsFree") {
         uint32_t idx = PopStackArg(arena, cpu);
         tls_slots_.erase(idx);
         cpu.eax = 1;
@@ -1248,10 +1459,13 @@ bool Win32Bridge::DispatchThunkCall(uint32_t thunk_va, MemoryArena& arena, CpuSt
         uint32_t v = PopStackArg(arena, cpu);
         cpu.eax = htonl(v);
     } else {
-        cpu.esp = initial_esp + entry.stack_pop_bytes;
         cpu.eax = 1;
     }
 
+    // Strict __stdcall stack discipline: always advance initial_esp by entry.stack_pop_bytes
+    if (entry.dll_name != "vorbisfile.dll") {
+        cpu.esp = initial_esp + entry.stack_pop_bytes;
+    }
     cpu.eip = return_eip;
     return true;
 }

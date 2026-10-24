@@ -292,13 +292,28 @@ bool D3D9SurfaceRenderer::EnsureEglCurrentLocked() {
         if (pending_window_ != nullptr) {
             active_window_ = pending_window_;
             ANativeWindow_acquire(active_window_);
-            surface_width_ = std::max(1, ANativeWindow_getWidth(active_window_));
-            surface_height_ = std::max(1, ANativeWindow_getHeight(active_window_));
         }
         window_changed_ = false;
     }
 
     if (active_window_ == nullptr) return false;
+
+    int32_t cur_w = std::max(1, ANativeWindow_getWidth(active_window_));
+    int32_t cur_h = std::max(1, ANativeWindow_getHeight(active_window_));
+
+    // Do not allocate or queue buffers while the SurfaceView is still in Portrait geometry
+    // during the transition to Landscape (prevents BLASTBufferQueue buffer size rejection).
+    if (cur_w < cur_h) {
+        return false;
+    }
+
+    if (egl_display_ != EGL_NO_DISPLAY && egl_surface_ != EGL_NO_SURFACE &&
+        (cur_w != surface_width_ || cur_h != surface_height_)) {
+        DestroyEglLocked();
+    }
+
+    surface_width_ = cur_w;
+    surface_height_ = cur_h;
 
     if (egl_display_ == EGL_NO_DISPLAY) {
         egl_display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -334,6 +349,7 @@ bool D3D9SurfaceRenderer::EnsureEglCurrentLocked() {
         }
         if (egl_context_ == EGL_NO_CONTEXT) return false;
 
+        ANativeWindow_setBuffersGeometry(active_window_, surface_width_, surface_height_, WINDOW_FORMAT_RGBA_8888);
         egl_surface_ = eglCreateWindowSurface(egl_display_, config, active_window_, nullptr);
         if (egl_surface_ == EGL_NO_SURFACE) return false;
     }
@@ -343,9 +359,6 @@ bool D3D9SurfaceRenderer::EnsureEglCurrentLocked() {
             return false;
         }
     }
-
-    surface_width_ = std::max(1, ANativeWindow_getWidth(active_window_));
-    surface_height_ = std::max(1, ANativeWindow_getHeight(active_window_));
 
     if (shader_program_ == 0) {
         CompileShadersAndFontLocked();
@@ -974,15 +987,16 @@ void D3D9SurfaceRenderer::RenderOverlayTextLocked(int32_t x, int32_t y, uint32_t
     std::vector<PackedGpuVertex> verts;
     verts.reserve(text.size() * 6);
 
+    float scale = std::max(1.0f, static_cast<float>(surface_height_) / 540.0f);
     float pen_x = static_cast<float>(x);
     float pen_y = static_cast<float>(y);
-    const float glyph_w = 10.0f;
-    const float glyph_h = 14.0f;
+    const float glyph_w = std::round(8.5f * scale);
+    const float glyph_h = std::round(13.0f * scale);
 
     for (char c : text) {
         if (c == '\n') {
             pen_x = static_cast<float>(x);
-            pen_y += glyph_h + 4.0f;
+            pen_y += glyph_h + std::round(4.0f * scale);
             continue;
         }
         if (c < 32 || c > 126) {
@@ -1055,6 +1069,10 @@ void D3D9SurfaceRenderer::OnD3D9Present() {
 #ifdef __ANDROID__
     if (EnsureEglCurrentLocked()) {
         glViewport(0, 0, surface_width_, surface_height_);
+        float sw = static_cast<float>(surface_width_);
+        float sh = static_cast<float>(surface_height_);
+        float scale = std::max(1.0f, sh / 540.0f);
+
         if (current_draw_calls_ == 0) {
             float r = static_cast<float>((last_clear_color_ >> 16) & 0xFFu) / 255.0f;
             float g = static_cast<float>((last_clear_color_ >> 8) & 0xFFu) / 255.0f;
@@ -1062,11 +1080,18 @@ void D3D9SurfaceRenderer::OnD3D9Present() {
             glClearColor(r, g, b, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Render subtle horizon & ground grid for the active Direct3D9 viewport while game world streams
-            float horizon_y = static_cast<float>(surface_height_) * 0.46f;
-            RenderFilledRectLocked(0.0f, 0.0f, static_cast<float>(surface_width_), horizon_y, 0xFF12161Du);
-            RenderFilledRectLocked(0.0f, horizon_y, static_cast<float>(surface_width_), static_cast<float>(surface_height_) - horizon_y, 0xFF181D26u);
-            RenderFilledRectLocked(0.0f, horizon_y - 1.0f, static_cast<float>(surface_width_), 2.0f, 0xFF2C3545u);
+            float horizon_y = sh * 0.45f;
+            RenderFilledRectLocked(0.0f, 0.0f, sw, horizon_y, 0xFF10141Bu);
+            RenderFilledRectLocked(0.0f, horizon_y, sw, sh - horizon_y, 0xFF161B24u);
+            RenderFilledRectLocked(0.0f, horizon_y - 1.0f, sw, 2.0f, 0xFF343F52u);
+
+            // Moving ground distance lines to confirm live 60 FPS swapchain cadence
+            float phase = static_cast<float>(frame_counter_ % 60u) / 60.0f;
+            for (int i = 0; i < 6; ++i) {
+                float t = std::fmod((static_cast<float>(i) + phase) / 6.0f, 1.0f);
+                float y_line = horizon_y + (t * t) * (sh - horizon_y);
+                RenderFilledRectLocked(0.0f, y_line, sw, 1.5f, 0x442E3848u);
+            }
         }
 
         for (const auto& cmd : frame_texts_) {
@@ -1074,13 +1099,33 @@ void D3D9SurfaceRenderer::OnD3D9Present() {
         }
 
         if (!hud_status_lines_.empty()) {
-            int32_t box_h = static_cast<int32_t>(hud_status_lines_.size()) * 20 + 16;
-            RenderFilledRectLocked(20.0f, 68.0f, 760.0f, static_cast<float>(box_h), 0xB80D0F12u);
-            int32_t y_cursor = 76;
+            int32_t line_step = static_cast<int32_t>(std::round(19.0f * scale));
+            int32_t pad = static_cast<int32_t>(std::round(12.0f * scale));
+            int32_t box_x = static_cast<int32_t>(std::round(20.0f * scale));
+            int32_t box_y = static_cast<int32_t>(std::round(56.0f * scale));
+            int32_t box_w = std::min<int32_t>(surface_width_ - box_x * 2, static_cast<int32_t>(std::round(820.0f * scale)));
+            int32_t box_h = static_cast<int32_t>(hud_status_lines_.size()) * line_step + pad * 2;
+
+            RenderFilledRectLocked(
+                static_cast<float>(box_x),
+                static_cast<float>(box_y),
+                static_cast<float>(box_w),
+                static_cast<float>(box_h),
+                0xD00D0F12u
+            );
+            RenderFilledRectLocked(
+                static_cast<float>(box_x),
+                static_cast<float>(box_y),
+                static_cast<float>(box_w),
+                2.0f,
+                0xFF3A4454u
+            );
+
+            int32_t y_cursor = box_y + pad;
             for (size_t i = 0; i < hud_status_lines_.size(); ++i) {
                 uint32_t col = (i == 0) ? 0xFFE5E8ECu : 0xFFA9B4C2u;
-                RenderOverlayTextLocked(32, y_cursor, col, hud_status_lines_[i]);
-                y_cursor += 20;
+                RenderOverlayTextLocked(box_x + pad, y_cursor, col, hud_status_lines_[i]);
+                y_cursor += line_step;
             }
         }
 

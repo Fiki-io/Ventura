@@ -106,7 +106,8 @@ fun GameRunnerScreen(
                     isFocusableInTouchMode = true
                     holder.addCallback(object : SurfaceHolder.Callback {
                         override fun surfaceCreated(holder: SurfaceHolder) {
-                            if (holder.surface != null && holder.surface.isValid) {
+                            val frame = holder.surfaceFrame
+                            if (frame.width() >= frame.height() && holder.surface != null && holder.surface.isValid) {
                                 VenturaNativeBridge.bindAndroidSurface(holder.surface)
                             }
                         }
@@ -117,7 +118,9 @@ fun GameRunnerScreen(
                             width: Int,
                             height: Int
                         ) {
-                            // Viewport dimensions are queried via ANativeWindow_getWidth/Height on the render worker thread
+                            if (width >= height && holder.surface != null && holder.surface.isValid) {
+                                VenturaNativeBridge.bindAndroidSurface(holder.surface)
+                            }
                         }
 
                         override fun surfaceDestroyed(holder: SurfaceHolder) {

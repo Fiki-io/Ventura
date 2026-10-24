@@ -45,6 +45,7 @@ public:
 
     uint32_t GetHookedWndProcVa() const { return hooked_wndproc_va_; }
     uint64_t GetTotalSyscalls() const { return total_syscalls_; }
+    std::string GetLastSyscallSummary() const;
 
 private:
     uint32_t RegisterThunk(const std::string& dll, const std::string& fn, uint32_t stack_pop_bytes = 0);
@@ -67,6 +68,7 @@ private:
     uint32_t next_thunk_va_ = kWin32ThunkTableBaseVa;
     uint32_t hooked_wndproc_va_ = 0;
     uint64_t total_syscalls_ = 0;
+    std::string last_syscall_summary_ = "BOOT_CRT_INIT";
 
     std::deque<Win32Msg> message_queue_;
     uint8_t key_state_[256] = {0};

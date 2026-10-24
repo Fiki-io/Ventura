@@ -18,12 +18,6 @@ constexpr uint32_t kFlagSF = 0x0080u;
 constexpr uint32_t kFlagDF = 0x0400u;
 constexpr uint32_t kFlagOF = 0x0800u;
 
-std::string Hex32(uint32_t val) {
-    std::ostringstream oss;
-    oss << "0x" << std::uppercase << std::hex << std::setw(8) << std::setfill('0') << val;
-    return oss.str();
-}
-
 uint32_t* GetCpuRegPtr(CpuState32& cpu, uint8_t reg_idx) {
     switch (reg_idx & 7u) {
         case 0: return &cpu.eax;
@@ -661,15 +655,22 @@ bool X86AotEngine::StepInstruction(
         }
         cpu.eip = pc + consumed;
     }
-    // XCHG r/m32, r32 (0x87)
-    else if (op == 0x87) {
+    // XCHG r/m8, r8 (0x86) & XCHG r/m32, r32 (0x87)
+    else if (op == 0x86 || op == 0x87) {
         uint8_t reg = 0, rm = 0, mod = 0;
         uint32_t consumed = 0;
         uint32_t ea = DecodeModRmEffectiveAddress(arena, cpu, pc, fs_override, &reg, &rm, &mod, &consumed);
-        uint32_t r_val = ReadCpuReg(cpu, reg);
-        uint32_t rm_val = (mod == 3) ? ReadCpuReg(cpu, rm) : arena.ReadU32(ea);
-        *GetCpuRegPtr(cpu, reg) = rm_val;
-        if (mod == 3) *GetCpuRegPtr(cpu, rm) = r_val; else arena.WriteU32(ea, r_val);
+        if (op == 0x86) {
+            uint8_t r_val = ReadCpuReg8(cpu, reg);
+            uint8_t rm_val = (mod == 3) ? ReadCpuReg8(cpu, rm) : arena.ReadU8(ea);
+            WriteCpuReg8(cpu, reg, rm_val);
+            if (mod == 3) WriteCpuReg8(cpu, rm, r_val); else arena.WriteU8(ea, r_val);
+        } else {
+            uint32_t r_val = ReadCpuReg(cpu, reg);
+            uint32_t rm_val = (mod == 3) ? ReadCpuReg(cpu, rm) : arena.ReadU32(ea);
+            *GetCpuRegPtr(cpu, reg) = rm_val;
+            if (mod == 3) *GetCpuRegPtr(cpu, rm) = r_val; else arena.WriteU32(ea, r_val);
+        }
         cpu.eip = pc + consumed;
     }
     // MOV r/m8, r8 (0x88) & MOV r8, r/m8 (0x8A)
@@ -728,7 +729,7 @@ bool X86AotEngine::StepInstruction(
         }
         cpu.eip = pc;
     }
-    // CWDE (0x98) & CDQ (0x99) & FWAIT (0x9B) & SAHF (0x9E)
+    // CWDE (0x98), CDQ (0x99), FWAIT (0x9B), PUSHFD (0x9C), POPFD (0x9D), SAHF (0x9E), LAHF (0x9F)
     else if (op == 0x98) {
         cpu.eax = static_cast<uint32_t>(static_cast<int32_t>(static_cast<int16_t>(cpu.eax & 0xFFFFu)));
         cpu.eip = pc;
@@ -737,9 +738,21 @@ bool X86AotEngine::StepInstruction(
         cpu.eip = pc;
     } else if (op == 0x9B) {
         cpu.eip = pc;
+    } else if (op == 0x9C) {
+        cpu.esp -= 4;
+        arena.WriteU32(cpu.esp, cpu.eflags);
+        cpu.eip = pc;
+    } else if (op == 0x9D) {
+        cpu.eflags = arena.ReadU32(cpu.esp);
+        cpu.esp += 4;
+        cpu.eip = pc;
     } else if (op == 0x9E) {
         uint8_t ah = static_cast<uint8_t>((cpu.eax >> 8) & 0xFFu);
         cpu.eflags = (cpu.eflags & ~0xD5u) | (ah & 0xD5u);
+        cpu.eip = pc;
+    } else if (op == 0x9F) {
+        uint8_t flags_low = static_cast<uint8_t>((cpu.eflags & 0xD5u) | 0x02u);
+        cpu.eax = (cpu.eax & 0xFFFF00FFu) | (static_cast<uint32_t>(flags_low) << 8);
         cpu.eip = pc;
     }
     // MOV AL/EAX, moffs (0xA0..0xA3)
@@ -839,19 +852,37 @@ bool X86AotEngine::StepInstruction(
         } else if (op == 0xD2 || op == 0xD3) {
             count = cpu.ecx & 31u;
         }
-        uint32_t v = (mod == 3) ? ReadCpuReg(cpu, rm) : arena.ReadU32(ea);
-        if (count > 0) {
-            switch (subop & 7u) {
-                case 0: v = (v << count) | (v >> (32 - count)); break; // ROL
-                case 1: v = (v >> count) | (v << (32 - count)); break; // ROR
-                case 4: case 6: v <<= count; break;                    // SHL
-                case 5: v >>= count; break;                            // SHR
-                case 7: v = static_cast<uint32_t>(static_cast<int32_t>(v) >> count); break; // SAR
-                default: break;
+        bool is_byte = (op == 0xC0 || op == 0xD0 || op == 0xD2);
+        if (is_byte) {
+            uint8_t v = (mod == 3) ? ReadCpuReg8(cpu, rm) : arena.ReadU8(ea);
+            if ((count & 7u) > 0) {
+                uint8_t c8 = count & 7u;
+                switch (subop & 7u) {
+                    case 0: v = static_cast<uint8_t>((v << c8) | (v >> (8 - c8))); break;
+                    case 1: v = static_cast<uint8_t>((v >> c8) | (v << (8 - c8))); break;
+                    case 4: case 6: v = static_cast<uint8_t>(v << count); break;
+                    case 5: v = static_cast<uint8_t>(v >> count); break;
+                    case 7: v = static_cast<uint8_t>(static_cast<int8_t>(v) >> count); break;
+                    default: break;
+                }
+                UpdateArithmeticFlags(cpu, v ? (v & 0x80u ? 0x80000000u : 1u) : 0u, false, false);
             }
-            UpdateArithmeticFlags(cpu, v, false, false);
+            if (mod == 3) WriteCpuReg8(cpu, rm, v); else arena.WriteU8(ea, v);
+        } else {
+            uint32_t v = (mod == 3) ? ReadCpuReg(cpu, rm) : arena.ReadU32(ea);
+            if (count > 0) {
+                switch (subop & 7u) {
+                    case 0: v = (v << count) | (v >> (32 - count)); break; // ROL
+                    case 1: v = (v >> count) | (v << (32 - count)); break; // ROR
+                    case 4: case 6: v <<= count; break;                    // SHL
+                    case 5: v >>= count; break;                            // SHR
+                    case 7: v = static_cast<uint32_t>(static_cast<int32_t>(v) >> count); break; // SAR
+                    default: break;
+                }
+                UpdateArithmeticFlags(cpu, v, false, false);
+            }
+            if (mod == 3) *GetCpuRegPtr(cpu, rm) = v; else arena.WriteU32(ea, v);
         }
-        if (mod == 3) *GetCpuRegPtr(cpu, rm) = v; else arena.WriteU32(ea, v);
         cpu.eip = pc + consumed;
     }
     // RET (0xC3) & RET imm16 (0xC2)
@@ -989,6 +1020,28 @@ bool X86AotEngine::StepInstruction(
         }
         cpu.eip = pc + consumed;
     }
+    // XLATB (0xD7)
+    else if (op == 0xD7) {
+        uint8_t al = ReadCpuReg8(cpu, 0);
+        WriteCpuReg8(cpu, 0, arena.ReadU8(cpu.ebx + al));
+        cpu.eip = pc;
+    }
+    // LOOPNE (0xE0), LOOPE (0xE1), LOOP (0xE2), JECXZ (0xE3)
+    else if (op >= 0xE0 && op <= 0xE3) {
+        int8_t rel8 = static_cast<int8_t>(arena.ReadU8(pc));
+        uint32_t next_eip = pc + 1;
+        bool take = false;
+        if (op == 0xE3) {
+            take = (cpu.ecx == 0);
+        } else {
+            cpu.ecx -= 1;
+            bool zf = (cpu.eflags & kFlagZF) != 0;
+            if (op == 0xE0) take = (cpu.ecx != 0 && !zf);
+            else if (op == 0xE1) take = (cpu.ecx != 0 && zf);
+            else take = (cpu.ecx != 0);
+        }
+        cpu.eip = take ? static_cast<uint32_t>(static_cast<int64_t>(next_eip) + rel8) : next_eip;
+    }
     // CALL rel32 (0xE8)
     else if (op == 0xE8) {
         int32_t rel32 = static_cast<int32_t>(arena.ReadU32(pc));
@@ -1067,6 +1120,17 @@ bool X86AotEngine::StepInstruction(
     else if (op == 0xF9) { cpu.eflags |= kFlagCF; cpu.eip = pc; }
     else if (op == 0xFC) { cpu.eflags &= ~kFlagDF; cpu.eip = pc; }
     else if (op == 0xFD) { cpu.eflags |= kFlagDF; cpu.eip = pc; }
+    // Group 4 (0xFE: INC r/m8, DEC r/m8)
+    else if (op == 0xFE) {
+        uint8_t subop = 0, rm = 0, mod = 0;
+        uint32_t consumed = 0;
+        uint32_t ea = DecodeModRmEffectiveAddress(arena, cpu, pc, fs_override, &subop, &rm, &mod, &consumed);
+        uint8_t v = (mod == 3) ? ReadCpuReg8(cpu, rm) : arena.ReadU8(ea);
+        uint8_t res = (subop == 0) ? static_cast<uint8_t>(v + 1) : static_cast<uint8_t>(v - 1);
+        if (mod == 3) WriteCpuReg8(cpu, rm, res); else arena.WriteU8(ea, res);
+        UpdateArithmeticFlags(cpu, res ? (res & 0x80u ? 0x80000000u : 1u) : 0u, (cpu.eflags & kFlagCF) != 0, false);
+        cpu.eip = pc + consumed;
+    }
     // Group 5 (0xFF: INC, DEC, CALL r/m32, JMP r/m32, PUSH r/m32)
     else if (op == 0xFF) {
         uint8_t subop = 0, rm = 0, mod = 0;
@@ -1094,7 +1158,7 @@ bool X86AotEngine::StepInstruction(
             cpu.eip = next_eip;
         }
     }
-    // Two-Byte 0x0F Instructions (Jcc, SETcc, CMOVcc, MOVZX, MOVSX, IMUL, BSF, BSR, SHLD, SHRD, SSE)
+    // Two-Byte 0x0F Instructions (Jcc, SETcc, CMOVcc, MOVZX, MOVSX, IMUL, BSF, BSR, XADD, CMPXCHG, BT*, SHLD, SHRD, SSE)
     else if (op == 0x0F) {
         uint8_t op2 = arena.ReadU8(pc++);
         if (op2 >= 0x80 && op2 <= 0x8F) { // Jcc rel32
@@ -1136,6 +1200,52 @@ bool X86AotEngine::StepInstruction(
             int64_t a = static_cast<int32_t>(ReadCpuReg(cpu, reg));
             int64_t b = static_cast<int32_t>((mod == 3) ? ReadCpuReg(cpu, rm) : arena.ReadU32(ea));
             *GetCpuRegPtr(cpu, reg) = static_cast<uint32_t>(a * b);
+            cpu.eip = pc + consumed;
+        } else if (op2 == 0xB0 || op2 == 0xB1) { // CMPXCHG r/m8, r8 / CMPXCHG r/m32, r32
+            uint8_t reg = 0, rm = 0, mod = 0;
+            uint32_t consumed = 0;
+            uint32_t ea = DecodeModRmEffectiveAddress(arena, cpu, pc, fs_override, &reg, &rm, &mod, &consumed);
+            if (op2 == 0xB1) {
+                uint32_t dst = (mod == 3) ? ReadCpuReg(cpu, rm) : arena.ReadU32(ea);
+                uint32_t src = ReadCpuReg(cpu, reg);
+                if (cpu.eax == dst) {
+                    cpu.eflags |= kFlagZF;
+                    if (mod == 3) *GetCpuRegPtr(cpu, rm) = src; else arena.WriteU32(ea, src);
+                } else {
+                    cpu.eflags &= ~kFlagZF;
+                    cpu.eax = dst;
+                }
+            }
+            cpu.eip = pc + consumed;
+        } else if (op2 == 0xC0 || op2 == 0xC1) { // XADD r/m8, r8 / XADD r/m32, r32
+            uint8_t reg = 0, rm = 0, mod = 0;
+            uint32_t consumed = 0;
+            uint32_t ea = DecodeModRmEffectiveAddress(arena, cpu, pc, fs_override, &reg, &rm, &mod, &consumed);
+            if (op2 == 0xC1) {
+                uint32_t dst = (mod == 3) ? ReadCpuReg(cpu, rm) : arena.ReadU32(ea);
+                uint32_t src = ReadCpuReg(cpu, reg);
+                uint32_t sum = dst + src;
+                *GetCpuRegPtr(cpu, reg) = dst;
+                if (mod == 3) *GetCpuRegPtr(cpu, rm) = sum; else arena.WriteU32(ea, sum);
+                UpdateArithmeticFlags(cpu, sum, sum < dst, false);
+            }
+            cpu.eip = pc + consumed;
+        } else if (op2 == 0xA4 || op2 == 0xAC || op2 == 0xBA || op2 == 0x70 || op2 == 0x71 || op2 == 0x72 || op2 == 0x73 || op2 == 0xC2 || op2 == 0xC4 || op2 == 0xC5 || op2 == 0xC6) {
+            uint8_t reg = 0, rm = 0, mod = 0;
+            uint32_t consumed = 0;
+            uint32_t ea = DecodeModRmEffectiveAddress(arena, cpu, pc, fs_override, &reg, &rm, &mod, &consumed);
+            uint8_t imm8 = arena.ReadU8(pc + consumed) & 31u;
+            consumed += 1;
+            if (op2 == 0xBA) { // BT / BTS / BTR / BTC r/m32, imm8
+                uint32_t v = (mod == 3) ? ReadCpuReg(cpu, rm) : arena.ReadU32(ea);
+                if (v & (1u << imm8)) cpu.eflags |= kFlagCF; else cpu.eflags &= ~kFlagCF;
+                if (reg == 5) v |= (1u << imm8);
+                else if (reg == 6) v &= ~(1u << imm8);
+                else if (reg == 7) v ^= (1u << imm8);
+                if (reg >= 5) {
+                    if (mod == 3) *GetCpuRegPtr(cpu, rm) = v; else arena.WriteU32(ea, v);
+                }
+            }
             cpu.eip = pc + consumed;
         } else if (op2 == 0xBC || op2 == 0xBD) { // BSF / BSR
             uint8_t reg = 0, rm = 0, mod = 0;

@@ -37,7 +37,7 @@ bool g_binary_loaded_ok = false;
 void ExecutionWorkerLoop() {
     while (g_process_running.load()) {
         if (g_binary_loaded_ok && !g_cpu_state.halted) {
-            ventura::X86AotEngine::ExecuteSlice(g_arena, g_win32_bridge, g_cpu_state, 32768);
+            ventura::X86AotEngine::ExecuteSlice(g_arena, g_win32_bridge, g_cpu_state, 65536);
         }
 
         ventura::D3D9FrameTelemetry tel = g_d3d9_renderer.GetTelemetry();
@@ -60,9 +60,9 @@ void ExecutionWorkerLoop() {
               << " | ESP: 0x" << std::setw(8) << g_cpu_state.esp << std::dec;
 
         std::ostringstream line3;
-        line3 << "RETIRED INST: " << g_cpu_state.retired_instructions
-              << " | WIN32/D3D9 SYSCALLS: " << g_win32_bridge.GetTotalSyscalls()
-              << " | FRAMES: " << tel.frame_index
+        line3 << "INST: " << g_cpu_state.retired_instructions
+              << " | SYSCALLS: " << g_win32_bridge.GetTotalSyscalls()
+              << " (" << g_win32_bridge.GetLastSyscallSummary() << ")"
               << " | D3D9 DRAWS: " << tel.draw_calls;
 
         std::vector<std::string> hud_lines = {
